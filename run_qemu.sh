@@ -1,7 +1,12 @@
-mkdir -p esp/EFI/BOOT
-cp BOOTAA64.EFI esp/EFI/BOOT/BOOTAA64.EFI
+#!/usr/bin/env bash
+set -euo pipefail
 
-QEMU="$(brew --prefix qemu)"
+cd "$(dirname "$0")"
+
+mkdir -p esp/EFI/BOOT
+cp build/BOOTAA64.EFI esp/EFI/BOOT/BOOTAA64.EFI
+
+QEMU_PREFIX="$(brew --prefix qemu)"
 
 args=(
   # Emulate a generic ARM virtual machine
@@ -14,7 +19,7 @@ args=(
   -m 512M                 
 
   # Use EDK2 AArch64 UEFI firmware as BIOS                                      
-  -bios "$QEMU/share/qemu/edk2-aarch64-code.fd" 
+  -bios "$QEMU_PREFIX/share/qemu/edk2-aarch64-code.fd" 
 
   # Mount the "esp" directory as a read-only FAT disk image (EFI System Partition)
   -drive if=none,id=esp,format=raw,file=fat:ro:esp,readonly=on
@@ -29,4 +34,4 @@ args=(
   -nographic
 )
 
-qemu-system-aarch64 "${args[@]}"
+"$QEMU_PREFIX/bin/qemu-system-aarch64" "${args[@]}"
