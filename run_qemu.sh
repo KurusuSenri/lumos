@@ -32,6 +32,9 @@ args=(
 
   # Run without a graphical display, use the terminal for I/O                                                       
   -nographic
+
+  # Enable gdb debugging
+  -s
 )
 
 "$QEMU_PREFIX/bin/qemu-system-aarch64" "${args[@]}"

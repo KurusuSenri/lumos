@@ -23,20 +23,16 @@ common_args=(
   -Wextra
 )
 
-"$CLANG" "${common_args[@]}" \
-  -I edk2/MdePkg/Include \
-  -I edk2/MdePkg/Include/AArch64 \
-  -c boot/efi.c \
-  -o build/efi.obj
+shopt -s nullglob
 
-"$CLANG" "${common_args[@]}" \
-  -c kernel/kernel.c \
-  -o build/kernel.obj
+for src in boot/*.c kernel/*.c drivers/*.c lib/*.c; do
+  obj="build/${src%.c}.obj"
 
-"$CLANG" "${common_args[@]}" \
-  -c drivers/serial.c \
-  -o build/serial.obj
+  mkdir -p "$(dirname "$obj")"
 
-"$CLANG" "${common_args[@]}" \
-  -c kernel/debug.c \
-  -o build/debug.obj
+  "$CLANG" "${common_args[@]}" \
+    -I edk2/MdePkg/Include \
+    -I edk2/MdePkg/Include/AArch64 \
+    -c "$src" \
+    -o "$obj"
+done

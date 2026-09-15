@@ -1,33 +1,6 @@
 #include "../include/debug.h"
 #include "../include/serial.h"
-
-/*
- * Read a 32-bit little-endian value from a byte array.
- */
-static uint32_t read_le32(const uint8_t *p)
-{
-    uint32_t value = 0;
-
-    for (unsigned int i = 0; i < 4; ++i) {
-        value |= (uint32_t)p[i] << (i * 8);
-    }
-
-    return value;
-}
-
-/*
- * Read a 64-bit little-endian value from a byte array.
- */
-static uint64_t read_le64(const uint8_t *p)
-{
-    uint64_t value = 0;
-
-    for (unsigned int i = 0; i < 8; ++i) {
-        value |= (uint64_t)p[i] << (i * 8);
-    }
-
-    return value;
-}
+#include "../include/memory_map.h"
 
 void debug_print_boot_info(const BootInfo *info)
 {
@@ -87,70 +60,39 @@ static const char *memory_type_name(uint32_t type)
     }
 }
 
-static void debug_print_memory_map(const BootInfo *info)
+/* Requires a validated map. */
+void debug_print_memory_map(const BootInfo *info)
 {
-    if (info == 0 || info->memory_map == 0) {
-        serial_puts("Missing memory map.\r\n");
-        return;
-    }
-
-    /*
-     * This parser understands the version 1 descriptor prefix:
-     * Type, PhysicalStart, VirtualStart, NumberOfPages, Attribute.
-     */
-    if (info->descriptor_version != 1 ||
-        info->descriptor_size < 40 ||
-        info->memory_map_size % info->descriptor_size != 0) {
-        serial_puts("Unsupported or invalid memory map.\r\n");
-        return;
-    }
-
-    const uint8_t *map = (const uint8_t *)info->memory_map;
-    uint64_t count =
-        info->memory_map_size / info->descriptor_size;
+    uint64_t count = memory_map_count(info);
 
     serial_puts("Memory map: entries=");
-    serial_put_hex64(count);
+    serial_put_uint64(count);
     serial_puts(" descriptor_size=");
     serial_put_hex64(info->descriptor_size);
     serial_puts("\r\n");
 
     for (uint64_t i = 0; i < count; ++i) {
-        /*
-         * Advance by the stride returned by UEFI,
-         * which may be larger than the 40-byte prefix.
-         */
-        const uint8_t *entry =
-            map + i * info->descriptor_size;
-
-        uint32_t type = read_le32(entry + 0);
-        uint64_t physical_start = read_le64(entry + 8);
-        uint64_t pages = read_le64(entry + 24);
-        uint64_t attributes = read_le64(entry + 32);
+        const MemoryDescriptor *entry = memory_map_get(info, i);
 
         serial_puts("type=");
-        serial_puts(memory_type_name(type));
-        serial_puts(" (");
-        serial_put_uint64(type);
+        serial_puts(memory_type_name(entry->type));
+        serial_puts("(");
+        serial_put_uint64(entry->type);
         serial_puts(")");
 
         serial_puts(" start=");
-        serial_put_hex64(physical_start);
+        serial_put_hex64(entry->physical_start);
 
         serial_puts(" pages=");
-        serial_put_uint64(pages);
+        serial_put_uint64(entry->pages);
 
         serial_puts(" attr=");
-        serial_put_hex64(attributes);
-
-        //serial_puts("\r\n");
+        serial_put_hex64(entry->attributes);
 
         serial_puts(" size=");
-        serial_put_uint64(pages * 4096);
+        serial_put_uint64(entry->pages * MEMORY_PAGE_SIZE);
         serial_puts("bytes/");
-        serial_put_uint64(pages * 4096 / 1024 / 1024);
-        serial_puts("MiB");
-        serial_puts("\r\n");
-            
+        serial_put_uint64(entry->pages * MEMORY_PAGE_SIZE / 1024 / 1024);
+        serial_puts("MB\r\n");
     }
 }
