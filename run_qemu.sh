@@ -10,7 +10,10 @@ QEMU_PREFIX="$(brew --prefix qemu)"
 
 args=(
   # Emulate a generic ARM virtual machine
-  -machine virt                          
+  # Use GICv2 interrupt controller, disable secure mode, and disable virtualization extensions
+  -machine virt,gic-version=2,secure=off,virtualization=off
+  # Use a single CPU core   
+  -smp 1                     
 
   # Use Cortex-A57 CPU model supporting aarch64 architecture
   -cpu cortex-a57  

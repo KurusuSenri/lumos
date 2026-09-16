@@ -16,6 +16,8 @@ common_args=(
   -fno-stack-protector
   # Use short wchar_t
   -fshort-wchar
+  # Disable floating-point registers
+  -mgeneral-regs-only
   # Enable optimizations
   -O2
   # All warnings
@@ -25,8 +27,8 @@ common_args=(
 
 shopt -s nullglob
 
-for src in boot/*.c kernel/*.c drivers/*.c lib/*.c; do
-  obj="build/${src%.c}.obj"
+for src in boot/*.c kernel/*.c kernel/*.S drivers/*.c lib/*.c tests/*.c; do
+  obj="build/${src%.*}.obj"
 
   mkdir -p "$(dirname "$obj")"
 

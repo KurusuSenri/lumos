@@ -93,6 +93,15 @@ void debug_print_memory_map(const BootInfo *info)
         serial_put_uint64(entry->pages * MEMORY_PAGE_SIZE);
         serial_puts("bytes/");
         serial_put_uint64(entry->pages * MEMORY_PAGE_SIZE / 1024 / 1024);
-        serial_puts("MB\r\n");
+        serial_puts("MiB\r\n");
     }
+}
+
+void debug_print_el(){
+    uint64_t value;
+    __asm__ volatile("mrs %0, CurrentEL" : "=r"(value));
+    uint64_t el = (value >> 2) & 3;
+    serial_puts("Current Exception Level: ");
+    serial_put_uint64(el);
+    serial_puts("\r\n");
 }

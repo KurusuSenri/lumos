@@ -7,5 +7,6 @@
 void debug_print_boot_info(const BootInfo *info);
 void debug_print_sp(uintptr_t sp);
 void debug_print_memory_map(const BootInfo *info);
+void debug_print_el(void);
 
 #endif

@@ -9,8 +9,8 @@ shopt -s nullglob
 
 objects=()
 
-for src in boot/*.c kernel/*.c drivers/*.c lib/*.c; do
-  objects+=("build/${src%.c}.obj")
+for src in boot/*.c kernel/*.c kernel/*.S drivers/*.c lib/*.c tests/*.c; do
+  objects+=("build/${src%.*}.obj")
 done
 
 args=(
