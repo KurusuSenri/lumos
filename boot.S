@@ -2,6 +2,9 @@
 .global _start
 
 _start:
+    msr daifset, #0xf   // Mask debug exceptions, SError, IRQ and FIQ during initialisation
+    msr spsel, #1       // Switch to stack pointer for EL1
+
     ldr x0, =stack_top  // Defined by linker script
     mov sp, x0
 

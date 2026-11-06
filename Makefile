@@ -17,13 +17,17 @@ LDFLAGS := -T linker.ld -nostdlib
 
 # Source files
 C_SOURCES := kernel.c \
+             exception.c \
              drivers/uart/uart.c
 
-OBJECTS := boot.o $(C_SOURCES:.c=.o)
+OBJECTS := boot.o vectors.o $(C_SOURCES:.c=.o)
 
 all: kernel.elf
 
 boot.o: boot.S
+	$(CC) --target=aarch64-none-elf -c $< -o $@
+
+vectors.o: vectors.S
 	$(CC) --target=aarch64-none-elf -c $< -o $@
 
 # Automatically generate dependency files for each source file

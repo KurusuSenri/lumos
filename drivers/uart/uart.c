@@ -32,9 +32,3 @@ void uart_print(const char *s)
         uart_putc(*s++);
     }
 }
-
-void uart_flush(void)
-{
-    while (UART_FR & UART_FR_BUSY) {
-    }
-}
