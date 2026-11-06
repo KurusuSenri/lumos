@@ -1,26 +1,11 @@
 #include <stdint.h>
-
-// UART base address for QEMU virt
-#define UART_BASE 0x09000000UL
-// Data Register offset for writing characters
-#define UART_DR (*(volatile uint32_t *)UART_BASE)
-
-static void uart_putc(char c)
-{
-    UART_DR = (uint32_t)c;
-}
-
-static void uart_puts(const char *s)
-{
-    while (*s) {
-        if (*s == '\n') {
-            uart_putc('\r');
-        }
-        uart_putc(*s++);
-    }
-}
+#include "drivers/uart/uart.h"
 
 void kernel_main(void)
 {
-    uart_puts("Hello from my kernel!\n");
+    uint64_t current_el;
+    __asm__ volatile("mrs %0, CurrentEL" : "=r"(current_el));
+    uart_print("Current EL: ");
+    uart_putc('0' + ((current_el >> 2) & 3));
+    uart_print("\n");
 }

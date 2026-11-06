@@ -15,31 +15,43 @@ CFLAGS := --target=aarch64-none-elf \
 
 LDFLAGS := -T linker.ld -nostdlib
 
+# Source files
+C_SOURCES := kernel.c \
+             drivers/uart/uart.c
+
+OBJECTS := boot.o $(C_SOURCES:.c=.o)
+
 all: kernel.elf
 
 boot.o: boot.S
 	$(CC) --target=aarch64-none-elf -c $< -o $@
 
-kernel.o: kernel.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# Automatically generate dependency files for each source file
+%.o: %.c
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-kernel.elf: boot.o kernel.o linker.ld
-	$(LD) $(LDFLAGS) boot.o kernel.o -o $@
+kernel.elf: $(OBJECTS) linker.ld
+	$(LD) $(LDFLAGS) $(OBJECTS) -o $@
 
-# - QEMU virt machine with GICv2
-# - Cortex-A57 CPU, 512MB RAM, 1 core
+# Automatically include dependency files if they exist
+-include $(C_SOURCES:.c=.d)
+
+clean:
+	rm -f $(OBJECTS) $(C_SOURCES:.c=.d) kernel.elf
+
+# - QEMU virt machine with GICv2, disable virtualization and secure mode to run in EL0/EL1
+# - Cortex-A57 CPU
+# - 512MB RAM
+# - Single core
 # - No graphical output, use terminal for I/O
 # - Specify kernel.elf as the boot image
 run: kernel.elf
 	qemu-system-aarch64 \
-		-M virt,gic-version=2 \
+		-M virt,gic-version=2,virtualization=off,secure=off \
 		-cpu cortex-a57 \
 		-m 512M \
 		-smp 1 \
 		-nographic \
 		-kernel kernel.elf
-
-clean:
-	rm -f *.o *.elf
 
 .PHONY: all run clean
