@@ -32,3 +32,31 @@ void uart_print(const char *s)
         uart_putc(*s++);
     }
 }
+
+void uart_print_hex(uint64_t value)
+{
+    static const char digits[] = "0123456789abcdef";
+
+    uart_print("0x");
+
+    for (int shift = 60; shift >= 0; shift -= 4) {
+        unsigned int digit = (value >> shift) & 0xf;
+        uart_putc(digits[digit]);
+    }
+}
+
+void uart_print_u64(uint64_t value)
+{
+    // UINT64_MAX has 20 decimal digits.
+    char buffer[20];
+    unsigned int count = 0;
+
+    do {
+        buffer[count++] = '0' + (value % 10);
+        value /= 10;
+    } while (value != 0);
+
+    while (count != 0) {
+        uart_putc(buffer[--count]);
+    }
+}

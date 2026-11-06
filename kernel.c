@@ -12,7 +12,11 @@ void kernel_main(void)
 
     exception_init();
 
-    uart_print("Before BRK\n");
+    uart_print("Before BRK 0\n");
     __asm__ volatile("brk #0" ::: "memory");
-    uart_print("After BRK\n");
+    uart_print("After BRK 0\n");
+
+    uart_print("After BRK 1\n");
+    __asm__ volatile("brk #1" ::: "memory");
+    uart_print("After BRK 1\n"); 
 }
