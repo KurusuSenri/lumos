@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct exception_frame {
-    // x0–x30 general registers. Floating-point registers are used
+    // x0–x30 general registers. Floating-point registers are not used
     uint64_t x[31];  
     // Exception Link Register for the exception return address
     uint64_t elr;    

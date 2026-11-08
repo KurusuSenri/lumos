@@ -1,6 +1,7 @@
 #include <stdint.h>
-#include "drivers/uart/uart.h"
 #include "exception.h"
+#include "drivers/gic/gic.h"
+#include "drivers/uart/uart.h"
 
 void kernel_main(void)
 {
@@ -11,12 +12,21 @@ void kernel_main(void)
     uart_print("\n");
 
     exception_init();
+    gic_init();
+    uart_enable_rx_irq();
 
-    uart_print("Before BRK 0\n");
-    __asm__ volatile("brk #0" ::: "memory");
-    uart_print("After BRK 0\n");
+    uart_print("UART IRQ echo ready\n");
 
-    uart_print("After BRK 1\n");
-    __asm__ volatile("brk #1" ::: "memory");
-    uart_print("After BRK 1\n"); 
+    __asm__ volatile(
+        "dsb sy\n"
+        "msr daifclr, #2\n"
+        "isb\n"
+        :
+        :
+        : "memory"
+    );
+
+    for (;;) {
+        __asm__ volatile("wfi");
+    }
 }

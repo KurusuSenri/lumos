@@ -18,7 +18,8 @@ LDFLAGS := -T linker.ld -nostdlib
 # Source files
 C_SOURCES := kernel.c \
              exception.c \
-             drivers/uart/uart.c
+             drivers/uart/uart.c \
+			 drivers/gic/gic.c
 
 OBJECTS := boot.o vectors.o $(C_SOURCES:.c=.o)
 

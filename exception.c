@@ -1,5 +1,6 @@
 #include "exception.h"
 #include "drivers/uart/uart.h"
+#include "drivers/gic/gic.h"
 
 extern char exception_vectors[];
 static void exception_dump(const struct exception_frame *frame);
@@ -17,6 +18,31 @@ void exception_init(void)
 
 void exception_handler(struct exception_frame *frame)
 {
+    if (frame->kind == EXCEPTION_IRQ) {
+        uint32_t acknowledge = gic_acknowledge();
+        uint32_t id = acknowledge & 0x3ff;
+
+        // Special IDs do not represent an ordinary acknowledged interrupt
+        if (id >= 1020) {
+            return;
+        }
+
+        if (id == UART_IRQ_ID) {
+            uart_handle_irq();
+        } else {
+            uart_print("Unexpected IRQ: ");
+            uart_print_u64(id);
+            uart_print("\n");
+
+            for (;;) {
+                __asm__ volatile("wfe");
+            }
+        }
+
+        gic_end_interrupt(acknowledge);
+        return;
+    }
+
     // The exception class (EC) is stored in bits [31:26] of ESR_EL1
     uint64_t ec = (frame->esr >> 26) & 0x3f;
 
