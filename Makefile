@@ -7,11 +7,13 @@ LD := $(shell brew --prefix lld)/bin/ld.lld
 # - Disable stack protector
 # - Use only general-purpose registers
 # - O2 optimisation, all warnings enabled
+# - Search headers from the project root
 CFLAGS := --target=aarch64-none-elf \
           -ffreestanding \
           -fno-stack-protector \
           -mgeneral-regs-only \
-          -O2 -Wall -Wextra
+          -O2 -Wall -Wextra \
+		  -I.
 
 LDFLAGS := -T linker.ld -nostdlib
 
@@ -19,7 +21,8 @@ LDFLAGS := -T linker.ld -nostdlib
 C_SOURCES := kernel.c \
              exception.c \
              drivers/uart/uart.c \
-			 drivers/gic/gic.c
+	     drivers/gic/gic.c \
+	     drivers/timer/timer.c
 
 OBJECTS := boot.o vectors.o $(C_SOURCES:.c=.o)
 

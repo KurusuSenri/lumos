@@ -11,16 +11,28 @@
 // Distributor Control Register: enable or disable interrupt forwarding
 #define GICD_CTLR REG32(GICD_BASE + 0x000)
 
-// Interrupt Set-Enable Register 1: write 1 to enable the corresponding interrupt among IDs 32-63
+// Interrupt Set-Enable Register
+// Write 1 to enable the corresponding interrupt
+// Resigter 0 is for IDs 0-31, register 1 is for IDs 32-63
+#define GICD_ISENABLER0 REG32(GICD_BASE + 0x100)
 #define GICD_ISENABLER1 REG32(GICD_BASE + 0x104)
 
-// Interrupt Clear-Enable Register 1: write 1 to disable the corresponding interrupt among IDs 32-63
+// Interrupt Clear-Enable Register
+// Write 1 to disable the corresponding interrupt
+// Resigter 0 is for IDs 0-31, register 1 is for IDs 32-63
+#define GICD_ICENABLER0 REG32(GICD_BASE + 0x180)
 #define GICD_ICENABLER1 REG32(GICD_BASE + 0x184)
 
-// Interrupt Clear-Pending Register 1: write 1 to clear the pending state of the corresponding interrupt among IDs 32-63
+// Interrupt Clear-Pending Register
+// Write 1 to clear the pending state of the corresponding interrupt
+// Register 0 is for IDs 0-31, register 1 is for IDs 32-63
+#define GICD_ICPENDR0 REG32(GICD_BASE + 0x280)
 #define GICD_ICPENDR1 REG32(GICD_BASE + 0x284)
 
-// Interrupt Configuration Register 2: configure level-sensitive or edge-triggered operation for IDs 32-47
+// Interrupt Configuration Register
+// Configure level-sensitive or edge-triggered operation
+// Register 1 is for IDs 16-31, register 2 is for IDs 32-47
+#define GICD_ICFGR1 REG32(GICD_BASE + 0xc04)
 #define GICD_ICFGR2 REG32(GICD_BASE + 0xc08)
 
 // Interrupt Priority Registers: access the priority byte for the specified interrupt ID
@@ -46,24 +58,38 @@
 // CPU Interface Enable: set bit 0 to enable interrupt delivery in this configuration
 #define GICC_CTLR_ENABLE (1U << 0)
 
+// Target CPU 0: set bit 0 of the target CPU mask
+#define GICD_ITARGETSR_CPU0 (1U << 0)
+// Priority Mask Threshold: allow priority values numerically lower than 255
+#define GICC_PMR_THRESHOLD 0xffU
+
+/* Uart */
 // UART Set-Enable: write bit 1 to enable interrupt ID 33
 #define GICD_ISENABLER1_UART (1U << 1)
 // UART Clear-Enable: write bit 1 to disable interrupt ID 33
 #define GICD_ICENABLER1_UART (1U << 1)
 // UART Clear-Pending: write bit 1 to clear the pending state of interrupt ID 33
 #define GICD_ICPENDR1_UART (1U << 1)
-
 // UART Configuration Mask: clear bits [3:2] to select level-sensitive operation for interrupt ID 33
 #define GICD_ICFGR2_UART_MASK (0b11U << 2)
 // UART Priority: assign priority value 128 to the UART interrupt
 #define GICD_IPRIORITYR_UART_PRIORITY 0x80U
-// Target CPU 0: set bit 0 of the target CPU mask
-#define GICD_ITARGETSR_CPU0 (1U << 0)
-// Priority Mask Threshold: allow priority values numerically lower than 255
-#define GICC_PMR_THRESHOLD 0xffU
+
+/* Timer */
+// Timer Set-Enable: ID 30 occupies bit 30 in the registers for IDs 0-31
+#define GICD_ISENABLER0_TIMER (1U << 30)
+// Timer Clear-Enable: write bit 30 to disable interrupt ID 30
+#define GICD_ICENABLER0_TIMER (1U << 30)
+// Timer Clear-Pending: write bit 30 to clear the pending state of interrupt ID 30
+#define GICD_ICPENDR0_TIMER (1U << 30)
+// Timer Configuration Mask: ID 30 occupies bits [29:28]; clear both to select level-sensitive
+#define GICD_ICFGR1_TIMER_MASK (0b11U << 28)
+// Timer Priority: assign priority value 128 to the timer interrupt
+#define GICD_IPRIORITYR_TIMER_PRIORITY 0x80U
 
 void gic_init(void)
 {
+    /* UART */
     // Disable the GIC Distributor and CPU interface before configuration
     GICD_CTLR = 0;
     GICC_CTLR = 0;
@@ -83,6 +109,17 @@ void gic_init(void)
     GICC_PMR = GICC_PMR_THRESHOLD;
     GICD_CTLR = GICD_CTLR_ENABLE;
     GICC_CTLR = GICC_CTLR_ENABLE;
+
+    /* Timer */
+    // Timer has no ITARGETSR entry, because a PPI is always local to the CPU
+    GICD_ICENABLER0 = GICD_ICENABLER0_TIMER;
+    GICD_ICPENDR0 = GICD_ICPENDR0_TIMER;
+
+    // ID 30 occupies bits [29:28]; 00 selects level-sensitive
+    GICD_ICFGR1 &= ~GICD_ICFGR1_TIMER_MASK;
+
+    GICD_IPRIORITYR(TIMER_IRQ_ID) = GICD_IPRIORITYR_TIMER_PRIORITY;
+    GICD_ISENABLER0 = GICD_ISENABLER0_TIMER;
 
     __asm__ volatile("dsb sy" ::: "memory");
 }

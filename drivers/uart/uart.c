@@ -117,6 +117,10 @@ void uart_handle_irq(void)
     UART_ICR = UART_ICR_RXIC;
 
     while (!(UART_FR & UART_FR_RXFE)) {
+        uint32_t hex = UART_DR & 0xff;
+        uart_print_hex(hex);
+        uart_print(" ");
+
         char c = (char)(UART_DR & 0xff);
 
         if (c == '\r' || c == '\n') {

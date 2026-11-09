@@ -1,6 +1,7 @@
 #include "exception.h"
 #include "drivers/uart/uart.h"
 #include "drivers/gic/gic.h"
+#include "drivers/timer/timer.h"
 
 extern char exception_vectors[];
 static void exception_dump(const struct exception_frame *frame);
@@ -29,6 +30,8 @@ void exception_handler(struct exception_frame *frame)
 
         if (id == UART_IRQ_ID) {
             uart_handle_irq();
+        } else if (id == TIMER_IRQ_ID) {
+            timer_handle_irq();
         } else {
             uart_print("Unexpected IRQ: ");
             uart_print_u64(id);
